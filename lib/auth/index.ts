@@ -333,6 +333,9 @@ export async function setSetting(key: string, value: string): Promise<void> {
 }
 
 export async function isSignupAllowed(): Promise<boolean> {
+  // Testing override: set ALLOW_SIGNUP=true in env to keep sign up open.
+  // Unset (default) = original behaviour, controlled from /admin/settings.
+  if (process.env.ALLOW_SIGNUP === 'true') return true;
   try {
     const currentCount = await userCount();
     if (currentCount === 0) {
