@@ -25,6 +25,10 @@ import {
   FAMILY_GUILT_PATTERNS,
   DARK_PATTERN_RULES,
 } from "./darkpattern-rules";
+import {
+  runAcrobatProChecks,
+  type AcrobatCheckerReport,
+} from "./pdf-acrobat-checker";
 const uuidv4 = (): string => crypto.randomUUID();
 
 interface PdfAnalysisResult {
@@ -36,6 +40,8 @@ interface PdfAnalysisResult {
     pageCount: number;
     isTagged: boolean;
     hasLanguage: boolean;
+    /** Add-on: full Acrobat Pro checker report (32 rules) */
+    acrobatReport?: AcrobatCheckerReport | null;
   };
 }
 
@@ -562,6 +568,24 @@ export async function analyzePdf(
   onProgress?.(
     `PDF analysis complete: ${issues.length} issues found across ${15} checks.`,
   );
+
+  // ─── ADD-ON: Acrobat Pro Accessibility Checker (32 rules) ───
+  // Runs after the 15 existing checks above (which are unchanged) and only
+  // adds findings those checks did not already report.
+  let acrobatReport: AcrobatCheckerReport | null = null;
+  try {
+    const acrobat = await runAcrobatProChecks(
+      fileBuffer,
+      fileName,
+      issues,
+      onProgress,
+    );
+    issues.push(...acrobat.issues);
+    acrobatReport = acrobat.report;
+  } catch {
+    /* add-on must never break the existing PDF audit */
+  }
+
   return {
     issues,
     text,
@@ -571,6 +595,7 @@ export async function analyzePdf(
       pageCount,
       isTagged,
       hasLanguage: hasLang,
+      acrobatReport,
     },
   };
 }
