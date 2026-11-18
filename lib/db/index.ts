@@ -7,6 +7,7 @@ dotenv.config();
 import { Pool } from 'pg';
 
 const connectionString = process.env.DATABASE_URL ||
+  process.env.NETLIFY_DB_URL || // Netlify Database (auto-provided on Netlify)
   (process.env.NODE_ENV === 'production'
     ? process.env.DATABASE_PROD_URL
     : process.env.DATABASE_DEV_URL) ||
